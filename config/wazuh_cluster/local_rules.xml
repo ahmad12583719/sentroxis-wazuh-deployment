@@ -25,7 +25,6 @@
 
   <!-- Custom rule for SNMP traps -->
   <rule id="100004" level="3">
-    <decoded_as>syslog</decoded_as>
     <match>SNMP-TRAP</match>
     <description>Sentroxis: SNMP Trap received and normalized.</description>
     <group>snmp,trap,</group>
