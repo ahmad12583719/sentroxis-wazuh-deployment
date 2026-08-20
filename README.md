@@ -68,19 +68,22 @@ Once the containers are healthy (this may take 1-2 minutes), access the Wazuh Da
 - **Log Shipping (ECS)**:
   - `filebeat.yml`: Configured to ship normalized JSON logs to the Wazuh Indexer with explicit mapping to the **Elastic Common Schema (ECS)**.
 
-## Mounting Configurations
+## Custom Image Build
 
-The configuration files are mounted into the Docker containers as follows:
+To resolve permission issues and `sed` lock errors associated with bind-mounting configuration files, this deployment uses a custom `Dockerfile`. The following files are baked into the Wazuh Manager image:
 
-| Local Path | Container Path | Purpose |
-| :--- | :--- | :--- |
-| `./config/wazuh_cluster/ossec.conf` | `/var/ossec/etc/ossec.conf` | Main Wazuh Manager configuration |
-| `./config/wazuh_cluster/local_rules.xml` | `/var/ossec/etc/rules/local_rules.xml` | Custom normalization rules |
-| `./config/filebeat/filebeat.yml` | `/etc/filebeat/filebeat.yml` | Filebeat shipping & ECS mapping |
+- `config/wazuh_cluster/ossec.conf` -> `/var/ossec/etc/ossec.conf`
+- `config/wazuh_cluster/local_rules.xml` -> `/var/ossec/etc/rules/local_rules.xml`
+- `config/filebeat/filebeat.yml` -> `/etc/filebeat/filebeat.yml`
 
-To apply changes to these files, simply edit the local versions and restart the containers:
+The `Dockerfile` also ensures that `filebeat.yml` has the correct root ownership and permissions required by Filebeat.
+
+### Applying Configuration Changes
+If you modify any of the configuration files in the `config/` directory, you must rebuild the image for the changes to take effect:
+
 ```bash
-docker compose restart wazuh.manager
+docker compose build wazuh.manager
+docker compose up -d
 ```
 
 ## Troubleshooting
