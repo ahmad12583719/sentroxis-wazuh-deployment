@@ -62,6 +62,26 @@ Once the containers are healthy (this may take 1-2 minutes), access the Wazuh Da
 
 - **Memory Limit**: The Wazuh Manager container is restricted to a maximum of **6 GB RAM** to ensure host stability.
 - **Network**: The dashboard is mapped to host port **443**, allowing standard HTTPS access.
+- **Log Normalization**: 
+  - `ossec.conf`: Configured to accept Syslog (TCP/UDP 514) and monitor SNMP trap logs at `/var/log/snmptrapd.log`.
+  - `local_rules.xml`: Contains custom rules for Windows, Linux, and macOS telemetry normalization.
+- **Log Shipping (ECS)**:
+  - `filebeat.yml`: Configured to ship normalized JSON logs to the Wazuh Indexer with explicit mapping to the **Elastic Common Schema (ECS)**.
+
+## Mounting Configurations
+
+The configuration files are mounted into the Docker containers as follows:
+
+| Local Path | Container Path | Purpose |
+| :--- | :--- | :--- |
+| `./config/wazuh_cluster/ossec.conf` | `/var/ossec/etc/ossec.conf` | Main Wazuh Manager configuration |
+| `./config/wazuh_cluster/local_rules.xml` | `/var/ossec/etc/rules/local_rules.xml` | Custom normalization rules |
+| `./config/filebeat/filebeat.yml` | `/etc/filebeat/filebeat.yml` | Filebeat shipping & ECS mapping |
+
+To apply changes to these files, simply edit the local versions and restart the containers:
+```bash
+docker compose restart wazuh.manager
+```
 
 ## Troubleshooting
 To view logs and monitor the deployment progress:

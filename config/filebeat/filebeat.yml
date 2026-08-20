@@ -1,0 +1,62 @@
+# Filebeat configuration for Sentroxis Wazuh Log Shipping
+filebeat.modules:
+  - module: wazuh
+    alerts:
+      enabled: true
+    archives:
+      enabled: false
+
+# Input for normalized JSON logs
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/ossec/logs/alerts/alerts.json
+    json.keys_under_root: true
+    json.overwrite_keys: true
+    json.add_error_key: true
+    json.expand_keys: true
+
+# ECS Mapping Processors
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+  - rename:
+      fields:
+        - from: "agent.ip"
+          to: "host.ip"
+        - from: "agent.name"
+          to: "host.name"
+        - from: "agent.id"
+          to: "host.id"
+        - from: "rule.description"
+          to: "event.reason"
+        - from: "rule.id"
+          to: "event.code"
+        - from: "rule.level"
+          to: "event.severity"
+        - from: "full_log"
+          to: "event.original"
+      ignore_missing: true
+      fail_on_error: false
+
+# Output to Wazuh Indexer (OpenSearch)
+output.elasticsearch:
+  hosts: ["https://wazuh.indexer:9200"]
+  protocol: "https"
+  username: "${INDEXER_USERNAME}"
+  password: "${INDEXER_PASSWORD}"
+  ssl.certificate_authorities: ["/etc/ssl/root-ca.pem"]
+  ssl.certificate: "/etc/ssl/filebeat.pem"
+  ssl.key: "/etc/ssl/filebeat.key"
+  ssl.verification_mode: "full"
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
